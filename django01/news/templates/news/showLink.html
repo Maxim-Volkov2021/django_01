@@ -8,7 +8,11 @@
             <a href="{% url 'showTag' item.slug %}">{{item}}</a>
         {% endif %}
         {% if name == 'author' %}
-            <a href="{% url 'showAuthor' item.slug %}">{{item}}</a>
+            {% if item.name.first_name or item.name.last_name %}
+            <a href="{% url 'showAuthor' item.slug %}">{{item.name.first_name}} {{item.name.last_name}}</a>
+            {% else %}
+            <a href="{% url 'showAuthor' item.slug %}">{{item.name.username}}</a>
+            {% endif %}
         {% endif %}
     </div>
     {% endfor %}

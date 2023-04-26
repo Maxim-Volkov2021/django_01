@@ -1,7 +1,7 @@
 import json
 
 from django.core.paginator import Paginator
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render
 
@@ -9,29 +9,9 @@ from news.models import *
 
 
 # Create your views here.
-# def showAllNews(request):
-#     news_list = News.objects.order_by(
-#         "-timeCreate"
-#     ).filter(
-#         archive=False
-#     ).prefetch_related(
-#         'tags'
-#     ).select_related(
-#         'author'
-#     )
-#     paginator = Paginator(news_list, 10)
-#
-#     page_number = request.GET.get('page')
-#     page_obj = paginator.get_page(page_number)
-#     context = {
-#         "title": "News",
-#         "page_obj": page_obj
-#     }
-#     return render(request, 'news/index.html', context=context)
-
 class ShowAllNews(ListView):
     model = News
-    paginate_by = 10
+    paginate_by = 5
     template_name = "news/index.html"
 
     def get_context_data(self, *, object_list=None, **kwargs):
@@ -47,23 +27,23 @@ class ShowAllNews(ListView):
             ).prefetch_related(
                 'tags'
             ).select_related(
-                'author'
+                'author',
+                'author__name'
             )
 
-def showNews(request, slugNews):
-    try:
-        news_item = News.objects.get(slug=slugNews)
-        context = {
-            "title": news_item.title,
-            "news": news_item
-        }
-        return render(request, 'news/showNews.html', context=context)
-    except:
-        context = {
-            "title": "Error",
-            "text": "Error not found"
-        }
-        return render(request, 'news/showError.html', context=context, status=404)
+class ShowNews(DetailView):
+    model = News
+    template_name = "news/showNews.html"
+    context_object_name = 'news'
+    slug_url_kwarg = 'slugNews'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = context["news"].title
+        return context
+
+    def get_queryset(self):
+        return News.objects.filter(slug=self.kwargs['slugNews'], archive=False).select_related('author__name')
 
 def testWriteDB(request):
     # n = news.objects.all()
@@ -93,71 +73,85 @@ def testWriteDB(request):
 
     return HttpResponse("test write DB")
 
-def showTag(request, tag):
-    news_list = News.objects.filter(
-        tags__slug=tag
-    ).order_by(
-        "-timeCreate"
-    ).prefetch_related(
-        'tags'
-    ).select_related(
-        'author'
-    )
-    paginator = Paginator(news_list, 10)
 
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    context = {
-        "title": f"News tag '{tag}'",
-        "page_obj": page_obj
-    }
-    return render(request, 'news/index.html', context=context)
+class ShowTag(ListView):
+    model = News
+    paginate_by = 5
+    template_name = "news/index.html"
+    allow_empty = False
 
-def showAllTags(request):
-    tags_list = Tags.objects.all().order_by('name')
-    paginator = Paginator(tags_list, 15)
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f"News tag '{self.kwargs['tag']}'"
+        return context
 
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    context = {
-        "title": f"Tags",
-        "page_obj": page_obj,
-        "name": 'tag'
-    }
-    return render(request, 'news/showLink.html', context=context)
+    def get_queryset(self):
+        return News.objects.filter(
+            tags__slug=self.kwargs['tag']
+        ).order_by(
+            "-timeCreate"
+        ).prefetch_related(
+            'tags'
+        ).select_related(
+            'author',
+            'author__name'
+        )
 
-def showAuthor(request, slugAuthor):
-    news_list = News.objects.filter(
-        author__slug=slugAuthor
-    ).order_by(
-        "-timeCreate"
-    ).prefetch_related(
-        'tags'
-    ).select_related(
-        'author'
-    )
-    paginator = Paginator(news_list, 10)
+class ShowAllTags(ListView):
+    model = Tags
+    paginate_by = 10
+    template_name = "news/showLink.html"
 
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    context = {
-        "title": f"News author '{slugAuthor}'",
-        "page_obj": page_obj
-    }
-    return render(request, 'news/index.html', context=context)
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Tags"
+        context["name"] = "tag"
+        return context
 
-def showAllAuthors(request):
-    author_list = Author.objects.all().order_by('slug')
-    paginator = Paginator(author_list, 15)
+    def get_queryset(self):
+        return Tags.objects.all().order_by('name')
 
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    context = {
-        "title": f"Tags",
-        "page_obj": page_obj,
-        "name": 'author'
-    }
-    return render(request, 'news/showLink.html', context=context)
+
+class ShowAuthor(ListView):
+    model = News
+    paginate_by = 5
+    template_name = "news/index.html"
+    allow_empty = False
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if context['page_obj'][0].author.name.first_name or context['page_obj'][0].author.name.last_name:
+            context["title"] = f"News author '{context['page_obj'][0].author.name.first_name} {context['page_obj'][0].author.name.last_name}'"
+        else:
+            context["title"] = f"News author '{context['page_obj'][0].author.name.username}'"
+        return context
+
+    def get_queryset(self):
+        return News.objects.filter(
+            author__slug=self.kwargs['slugAuthor']
+        ).order_by(
+            "-timeCreate"
+        ).prefetch_related(
+            'tags'
+        ).select_related(
+            'author',
+            'author__name'
+        )
+
+
+class ShowAllAuthors(ListView):
+    model = Author
+    paginate_by = 10
+    template_name = "news/showLink.html"
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Authors"
+        context["name"] = "author"
+        return context
+
+    def get_queryset(self):
+        return Author.objects.all().order_by('slug').select_related('name')
 
 def pageNotFound(request, exception):
     context = {

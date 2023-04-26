@@ -3,7 +3,12 @@
     <div class="container">
         <h2 style="text-align: center">{{news.title}}</h2>
         <p style="text-align: center"><img style="width:60%" src="{{news.photo.url}}"></p>
-        <a href="{% url 'showAuthor' news.author.slug %}">{{news.author}}</a>
+        {% if news.author.name.first_name or news.author.name.last_name %}
+            <a href="{% url 'showAuthor' news.author.slug %}">{{news.author.name.first_name}} {{news.author.name.last_name}}</a>
+        {% else %}
+            <a href="{% url 'showAuthor' news.author.slug %}">{{news.author.name.username}}</a>
+        {% endif %}
+<!--        <a href="{% url 'showAuthor' news.author.slug %}">{{news.author}}</a>-->
         <p>{{news.content}} </p>
         <div class="navbar navbar-expand-lg">
             <ul class="navbar-nav mr-auto">
