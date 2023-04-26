@@ -1,0 +1,26 @@
+{% extends "news/base.html" %}
+{% block content%}
+    <div class="container">
+        {% for item in page_obj %}
+            <div class="row">
+                <a href="{% url 'showNews' item.slug %}">
+                <p style="text-align: center"><img style="width:40%" src="{{item.photo.url}}"></p>
+                <h3>{{item.title}}</h3>
+<!--                <p>{{item.content|truncatewords:5}}</p><br>-->
+                    </a>
+                <a href="{% url 'showAuthor' item.author.slug %}">{{item.author}}</a>
+                <div class="navbar navbar-expand-lg">
+                    <ul class="navbar-nav mr-auto">
+                    {% for tag in item.tags.all %}
+                        <li class="nav-item">
+                        <a href="{% url 'showTag' tag.slug %}" class="nav-link">{{tag}}</a>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </div>
+                <p>{{item.timeCreate|date:"d.m.Y"}}</p>
+                <hr>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock content %}

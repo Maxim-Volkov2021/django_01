@@ -1,0 +1,20 @@
+{% extends "news/base.html" %}
+{% block content%}
+    <div class="container">
+        <h2 style="text-align: center">{{news.title}}</h2>
+        <p style="text-align: center"><img style="width:60%" src="{{news.photo.url}}"></p>
+        <a href="{% url 'showAuthor' news.author.slug %}">{{news.author}}</a>
+        <p>{{news.content}} </p>
+        <div class="navbar navbar-expand-lg">
+            <ul class="navbar-nav mr-auto">
+            {% for tag in news.tags.all %}
+                <li class="nav-item">
+                <a href="{% url 'showTag' tag.slug %}" class="nav-link">{{tag}}</a>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+        <p>{{news.timeCreate|date:"H:i d.m.Y"}}</p>
+
+    </div>
+{% endblock content %}
