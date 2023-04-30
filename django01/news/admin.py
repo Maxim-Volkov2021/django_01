@@ -18,10 +18,11 @@ class NewsAdmin(admin.ModelAdmin):
             return mark_safe(f"<img style='width:10%' src='{object.photo.url}'>")
     get_html_photo.short_description = "photo"
     def get_author_name(self, object):
-        if object.author.name.first_name or object.author.name.last_name:
-            return object.author.name.first_name + " " + object.author.name.last_name
-        else:
-            return object.author.name.username
+        if object.author:
+            if object.author.name.first_name or object.author.name.last_name:
+                return object.author.name.first_name + " " + object.author.name.last_name
+            else:
+                return object.author.name.username
 
     get_author_name.short_description = "author"
 
@@ -38,13 +39,15 @@ class AuthorsAdmin(admin.ModelAdmin):
     search_fields = ('name__first_name', 'name__last_name', 'name__username')
 
     def get_author_name(self, object):
-        if object.name.first_name or object.name.last_name:
-            return object.name.first_name + " " + object.name.last_name
+        if object.name:
+            if object.name.first_name or object.name.last_name:
+                return object.name.first_name + " " + object.name.last_name
     get_author_name.short_description = "name"
 
     def get_author_username(self, object):
-        if object.name.username:
-            return object.name.username
+        if object.name:
+            if object.name.username:
+                return object.name.username
     get_author_username.short_description = "username"
 
 

@@ -1,14 +1,20 @@
 {% extends "news/base.html" %}
 {% block content%}
     <div class="container">
+        {% if request.user.is_authenticated and news.author %}
+        {% if request.user.username == news.author.name.username %}
+        <h1><a href="{% url 'editNews' news.slug %}">Edit</a></h1>
+        {% endif %}
+        {% endif %}
         <h2 style="text-align: center">{{news.title}}</h2>
         <p style="text-align: center"><img style="width:60%" src="{{news.photo.url}}"></p>
-        {% if news.author.name.first_name or news.author.name.last_name %}
-            <a href="{% url 'showAuthor' news.author.slug %}">{{news.author.name.first_name}} {{news.author.name.last_name}}</a>
-        {% else %}
-            <a href="{% url 'showAuthor' news.author.slug %}">{{news.author.name.username}}</a>
+        {% if news.author %}
+            {% if news.author.name.first_name or news.author.name.last_name %}
+                <a href="{% url 'showAuthor' news.author.slug %}">{{news.author.name.first_name}} {{news.author.name.last_name}}</a>
+            {% else %}
+                <a href="{% url 'showAuthor' news.author.slug %}">{{news.author.name.username}}</a>
+            {% endif %}
         {% endif %}
-<!--        <a href="{% url 'showAuthor' news.author.slug %}">{{news.author}}</a>-->
         <p>{{news.content}} </p>
         <div class="navbar navbar-expand-lg">
             <ul class="navbar-nav mr-auto">

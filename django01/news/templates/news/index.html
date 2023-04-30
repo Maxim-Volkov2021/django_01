@@ -8,10 +8,12 @@
                 <h3>{{item.title}}</h3>
 <!--                <p>{{item.content|truncatewords:5}}</p><br>-->
                     </a>
-                {% if item.author.name.first_name or item.author.name.last_name %}
-                    <a href="{% url 'showAuthor' item.author.slug %}">{{item.author.name.first_name}} {{item.author.name.last_name}}</a>
-                {% else %}
-                    <a href="{% url 'showAuthor' item.author.slug %}">{{item.author.name.username}}</a>
+                {% if item.author %}
+                    {% if item.author.name.first_name or item.author.name.last_name %}
+                        <a href="{% url 'showAuthor' item.author.slug %}">{{item.author.name.first_name}} {{item.author.name.last_name}}</a>
+                    {% else %}
+                        <a href="{% url 'showAuthor' item.author.slug %}">{{item.author.name.username}}</a>
+                    {% endif %}
                 {% endif %}
                 <div class="navbar navbar-expand-lg">
                     <ul class="navbar-nav mr-auto">

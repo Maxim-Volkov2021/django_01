@@ -1,14 +1,16 @@
-import json
-
-from django.core.paginator import Paginator
-from django.views.generic import ListView, DetailView
+from django.contrib.auth import logout
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.views import LoginView
+from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView
 from django.http import HttpResponse, HttpResponseNotFound
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
-from news.models import *
+from .forms import *
+from .models import *
 
+from django.contrib.auth.decorators import login_required
 
-# Create your views here.
 class ShowAllNews(ListView):
     model = News
     paginate_by = 5
@@ -45,6 +47,7 @@ class ShowNews(DetailView):
     def get_queryset(self):
         return News.objects.filter(slug=self.kwargs['slugNews'], archive=False).select_related('author__name')
 
+@login_required
 def testWriteDB(request):
     # n = news.objects.all()
     # n.delete()
@@ -79,6 +82,7 @@ class ShowTag(ListView):
     paginate_by = 5
     template_name = "news/index.html"
     allow_empty = False
+    slug_url_kwarg = 'tag'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -117,6 +121,7 @@ class ShowAuthor(ListView):
     paginate_by = 5
     template_name = "news/index.html"
     allow_empty = False
+    slug_url_kwarg = 'slugAuthor'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -153,7 +158,98 @@ class ShowAllAuthors(ListView):
     def get_queryset(self):
         return Author.objects.all().order_by('slug').select_related('name')
 
+
+def addNews(request):
+    try:
+        author = Author.objects.filter(name__username=request.user.username).order_by('id')[0]
+        if request.method == "POST":
+            form = AddNewsForm(request.POST, request.FILES)
+            if form.is_valid():
+                # author = Author.objects.filter(name__username=request.user.username).order_by('id')[0]
+                news = form.save(commit=False)
+                news.author = author
+                news.save()
+                form.save_m2m()
+                context = {
+                    "title": "Success",
+                    "text": "successfully added news"
+                }
+                return render(request, 'news/showError.html', context=context)
+        else:
+            form = AddNewsForm()
+        return render(request, 'news/addNews.html', context={'form': form, 'title': "Add news"})
+    except:
+        context = {
+            "title": "Error",
+            "text": "You are not an author and cannot add news"
+        }
+        return render(request, 'news/showError.html', context=context)
+
+
+def editNews(request, slugNews):
+    try:
+        author = Author.objects.filter(name__username=request.user.username).order_by('id')[0]
+        if request.method == "POST":
+            form = AddNewsForm(request.POST, request.FILES)
+            if form.is_valid():
+                form.save()
+        else:
+            news = (News.objects.filter(
+                slug=slugNews
+            ).prefetch_related(
+                'tags'
+            ).select_related(
+                'author',
+                'author__name'
+            ))[0]
+            form = AddNewsForm(instance=news)
+            return render(request, 'news/addNews.html', context={'form': form, 'title': "Edit news"})
+    except:
+        context = {
+            "title": "Error",
+            "text": "You are not an author and cannot edit this news"
+        }
+        return render(request, 'news/showError.html', context=context)
+
+class LoginUser(LoginView):
+    form_class = AuthenticationForm
+    template_name = 'news/login.html'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Login"
+        return context
+
+class RegisterUser(CreateView):
+    form_class = RegisterUserForm
+    template_name = 'news/register.html'
+    success_url = reverse_lazy('login')
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Register"
+        return context
+
+def ProfileUser(request):
+    context = {
+        "title": "Profile"
+    }
+    try:
+        author = Author.objects.filter(name__username=request.user.username).order_by('id')[0]
+        # context['author'] = True
+        context['slugAuthor'] = author.slug
+    except:
+        pass
+
+    return render(request, 'news/profileUser.html', context=context)
+
+
+def logoutUser(request):
+    logout(request)
+    return redirect('home')
+
 def pageNotFound(request, exception):
+    print(exception)
     context = {
         "title": "Error",
         "text": "Error not found"
