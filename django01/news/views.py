@@ -1,15 +1,12 @@
 from django.contrib.auth import logout
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView
-from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import render, redirect
 
 from .forms import *
 from .models import *
-
-from django.contrib.auth.decorators import login_required
 
 class ShowAllNews(ListView):
     model = News
@@ -46,35 +43,6 @@ class ShowNews(DetailView):
 
     def get_queryset(self):
         return News.objects.filter(slug=self.kwargs['slugNews'], archive=False).select_related('author__name')
-
-@login_required
-def testWriteDB(request):
-    # n = news.objects.all()
-    # n.delete()
-    # return HttpResponse("test delete DB")
-    # for i in range(5):
-    #     for j in range(2):
-    #         n = news()
-    #         n.title = "test title"
-    #         n.content = "test content"
-    #         n.tags = [
-    #             (j+i)
-    #         ]
-    #         n.save()
-    #         print(n)
-    #
-    # l = "abcdefg"
-    # for i in range(5):
-    #     t = tags()
-    #     t.name = l[i]
-    #     t.save()
-    #     print(t)
-    # t = Tags.objects.all()
-    # for temp in t:
-    #     temp.name = f'test{time.time()}'
-    #     temp.save()
-
-    return HttpResponse("test write DB")
 
 
 class ShowTag(ListView):
@@ -165,7 +133,6 @@ def addNews(request):
         if request.method == "POST":
             form = AddNewsForm(request.POST, request.FILES)
             if form.is_valid():
-                # author = Author.objects.filter(name__username=request.user.username).order_by('id')[0]
                 news = form.save(commit=False)
                 news.author = author
                 news.save()
@@ -236,7 +203,6 @@ def ProfileUser(request):
     }
     try:
         author = Author.objects.filter(name__username=request.user.username).order_by('id')[0]
-        # context['author'] = True
         context['slugAuthor'] = author.slug
     except:
         pass

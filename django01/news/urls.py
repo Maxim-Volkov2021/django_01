@@ -18,5 +18,4 @@ urlpatterns = [
 
     path("news/add/", addNews, name='addNews'),
     path("news/<slug:slugNews>/edit/", editNews, name='editNews'),
-    path("testwritedb/", testWriteDB),
 ]

@@ -22,7 +22,7 @@ class Author(models.Model):
         return self.slug
 
     def get_absolut_url(self):
-        return reverse("", kwargs={"": self.slug})
+        return reverse("showAuthor", kwargs={"slugAuthor": self.slug})
 
 
 class Tags(models.Model):
